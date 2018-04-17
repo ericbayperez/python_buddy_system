@@ -33,5 +33,11 @@ def set_memory_sizes(file_input):
     MSIZE = first_line[0]
     ASIZE = first_line[1]
 
+def next_power_of_2(x):  
+    if x == 0:
+        return 1
+    else:
+        return 2**(x - 1).bit_length()
+
 if __name__ == '__main__':
     main()
