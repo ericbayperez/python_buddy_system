@@ -42,10 +42,10 @@ def main():
         # If the middle token is a +, then allocate
         if line[1] == "+":
             allocate(int(line[0]), int(line[2]))
-            # if verbose == 1:
-            #     print_status_of_request()
-            #     print_buddy_lists()
-            #     print_deferred_requests()
+            if verbose == 1:
+                print_status_of_request()
+                print_buddy_lists()
+                print_deferred_requests()
 
         # If the middle token is a -, then deallocate
 
@@ -90,8 +90,7 @@ def allocate(process, memory_size):
         new_request = Request(process, memory_size, 2, block_size, buddy_lists[free_list_number][0][1])
         requests.append(new_request)
         print_request(new_request)
-        buddy_list[free_list_number].pop(0)
-
+        buddy_lists[free_list_number].pop(0)
 
 def make_buddy_lists():
     global MSIZE
@@ -148,15 +147,20 @@ def print_initial_blocks():
                 print('\n')
 
 def print_request(request):
-    print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
     # If request is deferred
     if request.state == 1:
+        print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
         print "\t Request deferred.\n"
     if request.state == 2:
+        print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
         print "\t Success: addr = " + str('{:#010x}'.format(request.address)+"\n")
+    if request.state == 3:
+        print "Request ID " + str(request.request_id) + ": deallocate."
+        print "\t Success."
+
 
 def print_status_of_request():
-    print "\nStatus of Requests..."
+    print "Status of Requests..."
     for request in requests:
         if request.state == 1:
             print "\tID " + str(request.request_id) + " deferred"
