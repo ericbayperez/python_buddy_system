@@ -27,7 +27,7 @@ class Request:
 def print_requests():
     global requests
     for request in requests:
-        print str(request.request_id) + " " + str(request.state) + " " + str(request.size)
+        print str(request.request_id) + " " + str(request.state) + " " + str(request.size) + " " + str(request.address)
 
 def main():
     # Get the file from the command line argument
@@ -63,13 +63,21 @@ def allocate(process, memory_size):
             if next_list_number == num_lists:
                 requests.append(Request(process, 1, 0, -1))
                 return
+        # Works it's way back down the buddy_lists to smaller sizes
         while next_list_number != free_list_number:
-            next_size = buddy_lists[next_list_number][0] / 2
+            # Divides the memory by two
+            next_size = buddy_lists[next_list_number][0][0] / 2
+            old_memory_address = buddy_lists[next_list_number][0][1]
+            # Takes it off the bigger list
             buddy_lists[next_list_number].pop(0)
+            # Moves to the smaller list
             next_list_number = next_list_number - 1
-            buddy_lists[next_list_number].append(next_size)
-            buddy_lists[next_list_number].append(next_size)
-        requests.append(Request(process, 2, next_size, -1))
+            # Adds that memory in as two smaller parts
+            buddy_lists[next_list_number].append((next_size, old_memory_address))
+            buddy_lists[next_list_number].append((next_size, old_memory_address + next_size))
+        # Updates the requests list to show it is allocated
+        requests.append(Request(process, 2, next_size, old_memory_address))
+        # Removes the memory that was allocated from the free list
         buddy_lists[next_list_number].pop(0)
 
 def make_buddy_lists():
@@ -82,7 +90,7 @@ def make_buddy_lists():
         buddy_lists.append([])
     num_lists = num_lists + 1
     buddy_lists.append([])
-    buddy_lists[num_lists-1].append(MSIZE)
+    buddy_lists[num_lists-1].append((MSIZE,0))
     
 def open_input_file():
     filename = sys.argv[1]
