@@ -158,7 +158,6 @@ def print_request(request):
         print "Request ID " + str(request.request_id) + ": deallocate."
         print "\t Success."
 
-
 def print_status_of_request():
     print "Status of Requests..."
     for request in requests:
@@ -191,7 +190,6 @@ def print_deferred_requests():
     if flag:
         print "\t(none)"
     print "\n"
-
 
 if __name__ == '__main__':
     main()
