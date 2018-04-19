@@ -152,14 +152,14 @@ def allocate_deferred(request):
         request.state = 2
         request.memory_size = next_size
         request.address = old_memory_address
-        # print_request(request)
+        print_reallocated(request)
         # Removes the memory that was allocated from the free list
         buddy_lists[next_list_number].pop(0)
     else:
         request.state = 2
         request.memory_size = block_size
         request.address = buddy_lists[free_list_number][0][1]
-        # print_request(request)
+        print_reallocated(request)
         buddy_lists[free_list_number].pop(0)
 
 def combine_blocks(address, memory_size):
@@ -247,16 +247,16 @@ def print_request(request):
     # If request is deferred
     if request.state == 1:
         print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
-        print "\t Request deferred.\n"
+        print "\t Request deferred."
     if request.state == 2:
         print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
-        print "\t Success: addr = " + str('{:#010x}'.format(request.address)+"\n")
+        print "\t Success: addr = " + str('{:#010x}'.format(request.address)+"")
     if request.state == 3:
-        print "Request ID " + str(request.request_id) + ": deallocate.\n"
-        print "\t Success."
+        print "Request ID " + str(request.request_id) + ": deallocate."
+        print "\tSuccess."
 
-def print_reallocated():
-    
+def print_reallocated(request):
+    print "\tDeferred request " + str(request.request_id) + " allocated; addr = " + str('{:#010x}'.format(request.address))
 
 def print_status_of_request():
     print "Status of Requests..."
