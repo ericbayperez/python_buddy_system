@@ -1,3 +1,6 @@
+# Eric Perez, Alisa Bohac, Mike Keck
+# Op Systems Program 3
+
 import sys
 import math
 
@@ -173,6 +176,9 @@ def combine_blocks(address, memory_size):
         return False, address, memory_size
     if buddy_lists[list_number] == []:
         buddy_lists[list_number].append((memory_size, address))
+        if verbose:
+            print_deallocate_verbose(address, memory_size, buddy_address, False)
+            print "\n"
         return False, address, memory_size
     else:
         for block in buddy_lists[list_number]:
@@ -185,8 +191,14 @@ def combine_blocks(address, memory_size):
                 # Pop off lower
                 buddy_lists[list_number].remove(block)
                 # buddy_lists[list_number+1].append((new_memory_size, new_address))
+                if verbose:
+                    print_deallocate_verbose(address, memory_size, buddy_address, True)
+                    print "\n"
                 return True, new_address, new_memory_size
         buddy_lists[list_number].append((memory_size, address))
+        if verbose:
+            print_deallocate_verbose(address, memory_size, buddy_address, False)
+            print "\n"
         return False, address, memory_size
 
 def make_buddy_lists():
@@ -290,6 +302,14 @@ def print_deferred_requests():
     if flag:
         print "\t(none)"
     print "\n"
+
+def print_deallocate_verbose(address, memory_size, buddy_address, buddy_flag):
+    print "Deallocating block at " + str('{:#010x}'.format(address)) + " with size = " + str(memory_size)
+    print "\tBuddy of " + str(memory_size) + "-byte block at " + str('{:#010x}'.format(address)) + " is at " + str('{:#010x}'.format(buddy_address))
+    if buddy_flag:
+        print "\tBuddy at " + str('{:#010x}'.format(buddy_address)) + " is free."
+    else:
+        print "\tBuddy at " + str('{:#010x}'.format(buddy_address)) + " is not free."
 
 if __name__ == '__main__':
     main()
