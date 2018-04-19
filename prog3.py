@@ -42,12 +42,13 @@ def main():
         # If the middle token is a +, then allocate
         if line[1] == "+":
             allocate(int(line[0]), int(line[2]))
-            if verbose == 1:
-                print_status_of_request()
-                print_buddy_lists()
-                print_deferred_requests()
-
-        # If the middle token is a -, then deallocate
+        # If the middle token is a - then dallocate
+        if line[1] == "-":
+            deallocate(int(line[0]))
+        if verbose == 1:
+            print_status_of_request()
+            print_buddy_lists()
+            print_deferred_requests()
 
 def allocate(process, memory_size):
     global buddy_lists
@@ -64,7 +65,7 @@ def allocate(process, memory_size):
             next_list_number = next_list_number + 1
             # If there's nothing bigger, then it is deferred
             if next_list_number == num_lists:
-                new_request = Request(process, memory_size, 1, 0, -1)
+                new_request = Request(process, memory_size, 1, block_size, -1)
                 requests.append(new_request)
                 print_request(new_request)
                 return
@@ -91,6 +92,102 @@ def allocate(process, memory_size):
         requests.append(new_request)
         print_request(new_request)
         buddy_lists[free_list_number].pop(0)
+
+def deallocate(request_id):
+    request = None
+    for data in requests:
+        if data.request_id == request_id and data.state == 2:
+            request = data
+            break
+    if request == None:
+        return
+    memory_size = request.memory_size
+    address = request.address
+    flag = True
+    while flag:
+        flag, address, memory_size = combine_blocks(address, memory_size)
+    request.state = 3
+    print_request(request)
+    reallocate()
+
+def reallocate():
+    for request in requests:
+        if request.state == 1:
+            allocate_deferred(request)
+
+def allocate_deferred(request):
+    global buddy_lists
+    global requests
+    memory_size = request.memory_size
+    block_size = next_power_of_2(memory_size)
+    free_list_number = get_list_number(block_size)
+    # If free list is empty, then theres no memory in that space to allocate
+    if buddy_lists[free_list_number] == []:
+        # Save the original list number
+        next_list_number = free_list_number
+        # Increment up through the lists until you find a non empty list
+        while buddy_lists[next_list_number] == []:
+            # Move to the next list
+            next_list_number = next_list_number + 1
+            # If there's nothing bigger, then it is deferred
+            if next_list_number == num_lists:
+                request.state = 1
+                request.size = block_size
+                request.address = -1
+                # print_request(request)
+                return
+        # Works it's way back down the buddy_lists to smaller sizes
+        while next_list_number != free_list_number:
+            # Divides the memory by two
+            next_size = buddy_lists[next_list_number][0][0] / 2
+            old_memory_address = buddy_lists[next_list_number][0][1]
+            # Takes it off the bigger list
+            buddy_lists[next_list_number].pop(0)
+            # Moves to the smaller list
+            next_list_number = next_list_number - 1
+            # Adds that memory in as two smaller parts
+            buddy_lists[next_list_number].append((next_size, old_memory_address))
+            buddy_lists[next_list_number].append((next_size, old_memory_address + next_size))
+        # Updates the requests list to show it is allocated
+        request.state = 2
+        request.memory_size = next_size
+        request.address = old_memory_address
+        # print_request(request)
+        # Removes the memory that was allocated from the free list
+        buddy_lists[next_list_number].pop(0)
+    else:
+        request.state = 2
+        request.memory_size = block_size
+        request.address = buddy_lists[free_list_number][0][1]
+        # print_request(request)
+        buddy_lists[free_list_number].pop(0)
+
+def combine_blocks(address, memory_size):
+    address_check = address / memory_size
+    if address_check % 2 == 0:
+        buddy_address = address + memory_size
+    else:
+        buddy_address = address - memory_size
+    list_number = get_list_number(memory_size)
+    if list_number == num_lists:
+        return False, address, memory_size
+    if buddy_lists[list_number] == []:
+        buddy_lists[list_number].append((memory_size, address))
+        return False, address, memory_size
+    else:
+        for block in buddy_lists[list_number]:
+            if buddy_address == block[1]:
+                new_memory_size = memory_size * 2
+                if address < buddy_address:
+                    new_address = address
+                else:
+                    new_address = buddy_address
+                # Pop off lower
+                buddy_lists[list_number].remove(block)
+                # buddy_lists[list_number+1].append((new_memory_size, new_address))
+                return True, new_address, new_memory_size
+        buddy_lists[list_number].append((memory_size, address))
+        return False, address, memory_size
 
 def make_buddy_lists():
     global MSIZE
@@ -155,8 +252,11 @@ def print_request(request):
         print "Request ID " + str(request.request_id) + ": allocate " + str(request.request_size) + " bytes."
         print "\t Success: addr = " + str('{:#010x}'.format(request.address)+"\n")
     if request.state == 3:
-        print "Request ID " + str(request.request_id) + ": deallocate."
+        print "Request ID " + str(request.request_id) + ": deallocate.\n"
         print "\t Success."
+
+def print_reallocated():
+    
 
 def print_status_of_request():
     print "Status of Requests..."
